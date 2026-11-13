@@ -1,0 +1,98 @@
+# Base configuration of the replication of Geertsema & Lu (2023).
+# Every "paper silent" default is listed here and explained in docs/replication/DECISIONS.md.
+# Experiment files in this folder use `extends: replication.yaml` and override single keys.
+
+run_name: replication        # namespace of predictions, artifacts and reports
+source: lseg                 # source adapter: lseg | wrds
+panel_name: panel            # file stem of the processed panel (variants use another name)
+
+period:
+  start: "1990-01"           # paper: 1980-01 (LSEG has no quarterly statements before 1989)
+  end: "2019-12"
+
+paths:                       # relative to the repository root (or RELVAL_ROOT)
+  raw: data/raw
+  external: data/external
+  interim: data/interim
+  processed: data/processed
+  predictions: data/predictions
+  artifacts: data/artifacts
+  reports: reports
+  paper_targets: docs/replication/paper_targets
+  docs: docs/replication
+
+n_jobs: -1                   # parallel workers over months (-1 = all cores)
+
+panel:
+  availability_lag_months: 3       # Hou, Xue & Zhang (2018)
+  max_age_months_quarterly: 12     # paper silent: a quarterly record is used for at most 12 months after its date
+  max_age_months_annual: 18        # paper silent: annual fallback record, at most 18 months
+  lag_tolerance_months: 1          # tolerance when locating the quarter t-k of 52/53-week fiscal calendars
+  size_filter_quantile: 0.10
+  max_monthly_return: 3.0          # data-quality guard: returns above +300% are treated as missing
+  exclude_ids: []                  # optional list of RICs to drop (documented reason required)
+  beta:
+    window: 60
+    min_obs: 60                    # paper silent; sensitivity runs use the values below
+    extra_min_obs: [24, 36, 48]
+  definitions:                     # LSEG -> Compustat definition switches (section 8.5 of the master prompt)
+    zero_fill_items: [dltt, dlc, pstk, invt, dv]   # blank in LSEG = none reported (Compustat stores 0)
+    opcost_from_ebitda: true       # cogs + xsga := sale - ebitda (Compustat identity sale - oibdp)
+    dpr_positive_income_only: true # WRDS convention; matches the 77% coverage of Table IA.4
+    dp_adjustment: none            # none | cogs | xsga : subtract depreciation from that item
+    ebit_constructed: false        # true: ebit = sale - cogs - xsga instead of the reported item
+    xsga_add_xrd: false            # LSEG SG&A already contains R&D (ebit = sale - cogs - xsga holds)
+    lt_includes_mib: false         # (lt + ceq + pstk + mib) / at = 1.00, so lt excludes minority interest
+    nopi_spi_from_pretax: false    # true: spi + nopi := pi - (ebit - xint)
+    efftax_positive_pi_only: true  # WRDS convention; matches the 78% coverage of Table IA.4
+
+splits:
+  n_blocks: 5
+  base_seed: 20230301              # block seed of a month = base_seed + yyyymm
+  seeds: [20230301, 20230302, 20230303, 20230304, 20230305]
+
+gbm:
+  lightgbm_version: "3.2.1"
+  params:                          # LightGBM defaults, written out for clarity
+    objective: regression
+    learning_rate: 0.1
+    num_leaves: 31
+    min_data_in_leaf: 20
+  num_boost_round: 10000           # cap; the number of trees is chosen by early stopping
+  fixed_rounds_80_20: 20           # 80:20 split has no validation set: the paper fixes 20 trees (IA.6.3)
+  early_stopping_rounds: 50
+  industry_categorical: true
+  deterministic: true
+  min_train_rows: 40               # a month-block with fewer training rows is skipped and logged
+  save_models: true                # headline seed only
+  save_shap: true                  # headline seed only
+
+benchmarks:
+  ind_min_firms: 5
+  rrv_min_firms: 30
+  hp_n_peers: 60
+  hp_min_peers: 5
+  # Bartram & Grinblatt regress market value on 28 Compustat items (online appendix Table IA.2).
+  # 16 of them exist in our download; missing: seq, icapt, teq (linear combinations of items we
+  # have), pstkr, ao, lo, aco, lco, ni, xido, ibcom, do. The result is labelled approximate.
+  bg_items: [at, ppent, ceq, pstk, dltt, lt, che, ap, dv, prefdiv, sale, ib, ibadj, pi, txt, nopi]
+  bg_zero_fill: [prefdiv, nopi]    # blank in LSEG = none reported (Compustat stores 0)
+  lasso_n_alphas: 50
+  cart_depths: [3, 4, 5, 6]
+
+portfolios:
+  n_quantiles: 5
+  nw_lags: 3
+  ew_min_size_quantile: 0.20       # equal-weighted: drop firms below the NYSE 20th size percentile
+
+explain:
+  peer_months: ["2019-12"]         # months for which full peer-weight matrices are stored
+  focus_firm: MRNA.OQ              # Table 5, Figures 4 and 5
+  focus_month: "2019-12"
+  focus_target: lnm2b
+
+thresholds:                        # working thresholds of the team (section 7)
+  med_abs_eps_tolerance: 0.05
+  med_eps_abs_max: 0.03
+  r2oos_M_min: 0.70
+  months_below_benchmarks_min: 0.90

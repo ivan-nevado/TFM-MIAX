@@ -1,0 +1,36 @@
+# --- licensed data and every derived output: never commit ---
+data/**
+!data/**/
+!data/**/.gitkeep
+reports/
+*.parquet
+*.csv.gz
+*.zip
+# --- python ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+# --- node ---
+node_modules/
+frontend/dist/
+# --- terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+# --- misc ---
+.env
+.serena/
+.DS_Store
+.idea/
+.vscode/
+*.log
+# paper targets are transcriptions of published tables, not licensed data
+!docs/replication/paper_targets/*.csv
