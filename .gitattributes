@@ -1,0 +1,7 @@
+# Line endings: LF everywhere, so shell scripts and Dockerfiles work in Linux containers.
+* text=auto eol=lf
+*.pdf binary
+*.docx binary
+*.png binary
+*.zip binary
+*.parquet binary

@@ -1,0 +1,8 @@
+# Fast end-to-end check of every stage on a few months. Not a result: never quote its numbers.
+extends: replication.yaml
+run_name: smoke
+period:
+  start: "2019-07"
+  end: "2019-12"
+splits:
+  seeds: [20230301, 20230302]

@@ -1,0 +1,31 @@
+model,variable,category,shap,cshap,rho,expected_sign
+ML_lnm2b,industry,Industry,8.9,8.9,-0.139,NA
+ML_lnm2b,roe_wr,Profitability,7.7,16.6,0.536,+
+ML_lnm2b,profitability_an,Profitability,6.0,22.6,0.490,+
+ML_lnm2b,rd_sale_wr,Growth,4.9,27.5,0.269,+
+ML_lnm2b,salesgrowth_an,Growth,3.8,31.3,0.368,+
+ML_lnm2b,aftret_invcapx_wr,Profitability,3.7,34.9,0.554,+
+ML_lnm2b,pretret_noa_wr,Profitability,3.0,38.0,0.493,+
+ML_lnm2b,roic_an,Profitability,2.9,40.8,0.518,+
+ML_lnm2b,roce_wr,Profitability,2.4,43.3,0.517,+
+ML_lnm2b,CAPMbeta,CAPMbeta,2.1,45.3,0.170,-
+ML_lnv2a,industry,Industry,7.7,7.7,-0.335,NA
+ML_lnv2a,roic_an,Profitability,7.0,14.7,0.535,+
+ML_lnv2a,chbe_an,Growth,4.3,19.0,0.491,+
+ML_lnv2a,lt_ppent_wr,Financial soundness,4.1,23.1,-0.353,+/-
+ML_lnv2a,debt_at_wr,Solvency,4.1,27.2,-0.121,+/-
+ML_lnv2a,sales2rec_an,Efficiency,3.9,31.1,0.295,+
+ML_lnv2a,rd_sale_wr,Growth,3.8,34.9,0.352,+
+ML_lnv2a,pretret_earnat_wr,Profitability,3.3,38.2,0.494,+
+ML_lnv2a,salesgrowth_an,Growth,3.2,41.4,0.319,+
+ML_lnv2a,lt_debt_wr,Financial soundness,2.9,44.3,0.016,+/-
+ML_lnv2s,opleverage_an,Efficiency,21.2,21.2,-0.819,-
+ML_lnv2s,at_turn_wr,Efficiency,9.0,30.2,-0.800,-
+ML_lnv2s,opmad_wr,Profitability,6.4,36.7,0.533,+
+ML_lnv2s,industry,Industry,5.9,42.6,0.112,NA
+ML_lnv2s,npm_wr,Profitability,3.4,46.0,0.455,+
+ML_lnv2s,rd_sale_wr,Growth,2.5,48.5,0.072,+
+ML_lnv2s,salesgrowth_an,Growth,2.4,50.8,0.191,+
+ML_lnv2s,debt_at_wr,Solvency,2.1,53.0,-0.045,+/-
+ML_lnv2s,gpm_wr,Profitability,2.1,55.1,0.539,+
+ML_lnv2s,chbe_an,Growth,2.1,57.2,0.166,+

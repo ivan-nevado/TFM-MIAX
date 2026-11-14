@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars (git-ignored) and adjust. No secrets or account ids belong here.
+region             = "eu-west-1"
+alarm_emails       = []
+monthly_budget_usd = 200
+
+# Production sizes
+batch_max_vcpus   = 128
+api_desired_count = 2
+
+# HTTPS on the API load balancer (ACM certificate in the same region)
+# api_certificate_arn = "arn:aws:acm:<region>:<account-id>:certificate/<id>"
+
+# Optional: CI role for GitHub Actions (requires the account's GitHub OIDC provider)
+# github_oidc_provider_arn = "arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com"
+# github_repository        = "<owner>/<repository>"

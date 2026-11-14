@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "relval-backend"
+version = "0.1.0"
+description = "Read-only API over the outputs of the Geertsema & Lu (2023) replication"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.29",
+  "pydantic>=2.6",
+  "pydantic-settings>=2.2",
+  "pandas>=2.1,<2.3",
+  "pyarrow>=14",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+s3 = ["s3fs>=2024.2"]
+ml = ["relval"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]

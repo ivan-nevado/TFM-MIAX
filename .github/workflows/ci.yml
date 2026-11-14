@@ -1,0 +1,59 @@
+name: ci
+
+# Lint and tests. No licensed data is needed: the tests use synthetic inputs only.
+on:
+  push:
+    branches: [main, replication]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+      - name: Install
+        run: |
+          uv venv .venv
+          uv pip install --python .venv -e "ml[dev]" -e "backend[dev]"
+      - name: Lint
+        run: |
+          .venv/bin/ruff check ml backend scripts
+          .venv/bin/ruff format --check ml backend scripts
+      - name: Method-fidelity tests
+        run: .venv/bin/python -m pytest ml/tests
+      - name: Backend tests
+        working-directory: backend
+        run: ../.venv/bin/python -m pytest tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install
+      - run: pnpm build
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.5
+      - run: terraform fmt -check -recursive terraform
+      - name: Validate (no backend, no credentials, nothing is applied)
+        run: |
+          for env in dev prod; do
+            (cd terraform/environments/$env && terraform init -backend=false -input=false && terraform validate)
+          done

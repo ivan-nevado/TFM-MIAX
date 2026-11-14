@@ -1,0 +1,31 @@
+model,variable,category,shap,d1980,d1990,d2000,d2010,chg
+ML_lnm2b,profitability_an,Profitability,6.0,2.8,6.7,5.8,9.0,6.2
+ML_lnm2b,rd_sale_wr,Growth,4.9,0.0,4.5,7.3,8.1,8.1
+ML_lnm2b,industry,Industry,8.9,11.1,8.7,8.3,7.4,-3.7
+ML_lnm2b,roe_wr,Profitability,7.7,9.4,7.2,8.7,5.1,-4.3
+ML_lnm2b,roic_an,Profitability,2.9,1.1,4.0,2.6,3.4,2.4
+ML_lnm2b,gprof_wr,Profitability,1.4,0.9,0.6,1.3,3.2,2.4
+ML_lnm2b,roce_wr,Profitability,2.4,0.7,1.7,4.5,2.8,2.1
+ML_lnm2b,aftret_invcapx_wr,Profitability,3.7,6.1,3.5,2.6,2.4,-3.7
+ML_lnm2b,CAPMbeta,CAPMbeta,2.1,3.4,1.8,1.8,1.3,-2.2
+ML_lnm2b,chbe_an,Growth,2.1,3.0,2.9,1.2,0.6,-2.4
+ML_lnv2a,sales2rec_an,Efficiency,3.9,1.0,3.0,4.9,7.5,6.5
+ML_lnv2a,roic_an,Profitability,7.0,2.9,8.3,8.8,7.2,4.3
+ML_lnv2a,industry,Industry,7.7,8.8,7.1,8.5,6.3,-2.5
+ML_lnv2a,rd_sale_wr,Growth,3.8,0.0,3.7,5.7,6.2,6.1
+ML_lnv2a,rect_turn_wr,Efficiency,1.8,0.5,0.4,2.9,4.4,3.9
+ML_lnv2a,roa_wr,Profitability,1.8,0.4,1.5,2.5,3.3,2.9
+ML_lnv2a,chbe_an,Growth,4.3,5.8,6.4,2.9,1.1,-4.7
+ML_lnv2a,CAPMbeta,CAPMbeta,1.5,2.9,1.2,1.2,1.0,-1.9
+ML_lnv2a,lt_ppent_wr,Financial soundness,4.1,5.1,7.5,1.7,0.5,-4.6
+ML_lnv2a,Accrual_wr,Financial soundness,2.3,8.5,0.3,0.4,0.5,-8.0
+ML_lnv2s,at_turn_wr,Efficiency,9.0,7.5,7.0,9.4,13.9,6.4
+ML_lnv2s,opleverage_an,Efficiency,21.2,26.7,20.9,22.7,12.9,-13.9
+ML_lnv2s,gpm_wr,Profitability,2.1,1.8,1.1,2.1,4.3,2.6
+ML_lnv2s,ebitda2revenue_an,Profitability,1.5,0.5,0.9,1.7,3.6,3.1
+ML_lnv2s,rd_sale_wr,Growth,2.5,0.0,2.7,3.8,3.3,3.3
+ML_lnv2s,sales2cash_an,Efficiency,2.0,0.8,1.4,2.8,3.3,2.4
+ML_lnv2s,npm_wr,Profitability,3.4,5.8,2.9,2.7,2.1,-3.8
+ML_lnv2s,chbe_an,Growth,2.1,2.2,3.1,1.7,1.0,-1.3
+ML_lnv2s,CAPMbeta,CAPMbeta,1.1,1.9,1.0,0.9,0.8,-1.1
+ML_lnv2s,sale_ac,Size,1.1,2.7,0.9,0.4,0.4,-2.3
