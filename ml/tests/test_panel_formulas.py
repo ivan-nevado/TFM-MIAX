@@ -125,6 +125,7 @@ def test_missing_value_rules(records):
     )
     assert rowtotal(pd.Series([np.nan]), pd.Series([np.nan])).iloc[0] == 0.0
     assert div(pd.Series([1.0]), pd.Series([0.0])).isna().all()
+    assert div(pd.Series([1.0]), pd.Series([1e-16])).isna().all()  # floating-point residue of a zero
 
 
 def test_no_feature_formula_reads_market_data():

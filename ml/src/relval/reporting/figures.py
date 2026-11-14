@@ -49,7 +49,7 @@ plt.rcParams.update(
         "font.family": ["Segoe UI", "DejaVu Sans"], "font.size": 9, "text.color": INK,
         "axes.edgecolor": AXIS, "axes.labelcolor": INK2, "axes.titlesize": 10, "axes.titleweight": "bold",
         "axes.titlelocation": "left", "axes.spines.top": False, "axes.spines.right": False,
-        "axes.grid": True, "axes.grid.axis": "y", "grid.color": GRID, "grid.linewidth": 0.6,
+        "axes.grid": True, "axes.grid.axis": "y", "axes.axisbelow": True, "grid.color": GRID, "grid.linewidth": 0.6,
         "xtick.color": MUTED, "ytick.color": MUTED, "xtick.labelcolor": INK2, "ytick.labelcolor": INK2,
         "legend.frameon": False, "legend.fontsize": 8, "lines.linewidth": 1.6, "lines.markersize": 5,
     }

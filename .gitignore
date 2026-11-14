@@ -34,3 +34,5 @@ frontend/dist/
 *.log
 # paper targets are transcriptions of published tables, not licensed data
 !docs/replication/paper_targets/*.csv
+# generated report: contains firm-level rows (Table 5); regenerate with `relval report`
+docs/replication/REPLICATION_REPORT.md

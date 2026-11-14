@@ -22,9 +22,16 @@ def rowtotal(*args: pd.Series) -> pd.Series:
     return pd.concat(args, axis=1).sum(axis=1, min_count=0)
 
 
+EPSILON = 1e-9  # USD millions: a tenth of a cent
+
+
 def div(num: pd.Series, den: pd.Series) -> pd.Series:
-    """Division that gives missing for a zero or missing denominator (never +-inf)."""
-    den = den.where(den != 0)
+    """Division that gives missing for a zero or missing denominator (never +-inf).
+
+    A denominator smaller than ``EPSILON`` in absolute value counts as zero: sums of quarters
+    that cancel leave floating-point residues (1e-16) that are zero in the accounts.
+    """
+    den = den.where(den.abs() > EPSILON)
     return (num / den).replace([np.inf, -np.inf], np.nan)
 
 

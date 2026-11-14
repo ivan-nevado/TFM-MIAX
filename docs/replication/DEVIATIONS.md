@@ -48,6 +48,7 @@ beta coverage (69%) and industry coverage (73% vs 74%) agree.
 | HP not run | TNIC is keyed by gvkey (see BLOCKERS) | Table 2 has no HP rows |
 | 13-factor model not run | The seven anomaly-cluster factors are not public (see BLOCKERS) | Table 3 has the mean and FF6 panels only |
 | Complete-case models skip small months | With all 97 inputs required, some early months have fewer than 40 training firms | LASSO and GBM "nm" rows cover fewer months |
+| RRV covers few firm-months and has a few exploding predictions | Industries need 30 fitting firms and an FF49 industry (73% of firm-months have one); a five-variable regression on 30 firms extrapolates badly for unusual firms, and exp() of the prediction then explodes | RRV values about 38% of firm-months; its median error is robust, its dollar RMSE and R²oos(M̂) are dominated by about ten firm-months. Kept as the method gives it; compare on the common sample |
 | LightGBM 3.2.1 as in the paper | Pinned in `ml/pyproject.toml` with NumPy < 2 | None |
 
 ## 3. "Paper silent" defaults
