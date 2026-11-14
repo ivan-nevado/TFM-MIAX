@@ -58,6 +58,7 @@ module "observability" {
   log_retention_days = var.log_retention_days
   alarm_emails       = var.alarm_emails
   monthly_budget_usd = var.monthly_budget_usd
+  enable_api_alarms  = true
   alb_arn_suffix     = module.api_service.alb_arn_suffix
   ecs_cluster_name   = module.api_service.cluster_name
   ecs_service_name   = module.api_service.service_name
