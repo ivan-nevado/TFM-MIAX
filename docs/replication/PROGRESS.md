@@ -14,7 +14,7 @@ Read this first when starting or resuming. Then `relval status` for the exact st
 | 5. Portfolios | Code done; produced by `relval report` |
 | 6. Explainability | Code done. SHAP stored with the base run; peer weights for December 2019 validated |
 | 7. Report | Code done; `relval report` writes tables, figures and `REPLICATION_REPORT.md` |
-| 8. Backend, frontend, Terraform | Done. API tests pass, frontend builds, both Terraform environments validate. Nothing applied to AWS |
+| 8. Backend, frontend, Terraform | Done. API tests pass, frontend builds, both Terraform environments validate. `dev` is partly applied (see "Running on AWS") |
 
 Every stage has also been run end to end on the smoke configuration (six months of 2019, all 55
 model variants).
@@ -60,10 +60,43 @@ gives it and is documented in `DEVIATIONS.md`.
 
 ## Running on AWS
 
-Terraform is validated but never applied from here. The owner applies an environment, pushes the
-training image (`ml/Dockerfile`), uploads the raw zips to `s3://<raw-bucket>/raw/lseg/`, then
-submits `stage=panel`, the `stage=train` array job and `stage=report`. See
-`terraform/modules/training_batch/README.md` and `scripts/batch_entrypoint.sh`.
+State of the `dev` environment (account 364694604800, eu-west-1, 2026-11-15):
+
+- Applied: the two ECR repositories and the raw, processed and artifacts buckets
+  (`terraform apply -target=module.ecr -target=module.storage`).
+- The LSEG files are in `s3://relval-dev-raw-364694604800/raw/lseg/`.
+- Images `relval-dev/training:20261115` and `relval-dev/api:20261115` are pushed. The
+  repositories are immutable: a new build needs a new tag in `terraform.tfvars`.
+- Applied in a second targeted apply: network, IAM roles, Batch (Spot), log groups, the
+  failed-job e-mail alert and the budget.
+- Not applied: load balancer, API service, frontend hosting (the only parts with a fixed cost,
+  about 0.85 USD a day). A plain `terraform apply` would create them: agree first.
+- Submitted on 2026-11-15 to the queue `relval-dev-training`: `replication-panel`, then the
+  `replication-train` array (30 children, one year each, `group=all`), then
+  `replication-report`. Each waits for the previous one. Spot interruptions are retried (3
+  attempts) and a retried child skips finished years.
+- A Spot quota increase to 32 vCPUs was requested on 2026-11-15.
+- Terraform state: `s3://relval-tfstate-364694604800/relval/dev/terraform.tfstate`.
+
+`dev` has no interface VPC endpoints and no NAT gateway: the API tasks and the Batch instances
+run in the public subnets with a public IP, and their security groups accept nothing from the
+internet. The API service defaults to 0 tasks. The account's Spot quota is 5 vCPUs, so
+`terraform.tfvars` sizes Batch for one 4-vCPU instance and the array children run one after
+another; raise `batch_max_vcpus` after a quota increase.
+
+Local timing test (2026-11-15): the three base models, first seed, 2019 only, 8 workers:
+142 seconds. Median absolute error 0.295 / 0.307 / 0.328.
+
+Progress of the jobs:
+
+```bash
+aws batch list-jobs --job-queue relval-dev-training --filters name=JOB_NAME,values='replication-*' \
+  --query 'jobSummaryList[].[jobName,status,arrayProperties.statusSummary]' --profile relval
+aws logs tail /relval-dev/training --follow --profile relval
+```
+
+Outputs land in `s3://relval-dev-artifacts-364694604800/` (`predictions/`, `artifacts/`,
+`reports/`). See `terraform/modules/training_batch/README.md` and `scripts/batch_entrypoint.sh`.
 
 ## Commands
 

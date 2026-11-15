@@ -30,4 +30,6 @@ need trained models at request time. Training is a batch workload of many small 
 - The API is stateless and cheap; scaling is a task-count change.
 - Peer weights are served only for months the pipeline stored; serving any month on demand will
   need the model-loading path through `backend/app/ml/adapter.py`.
-- VPC endpoints replace a NAT gateway, trading a small fixed cost per endpoint for no NAT cost.
+- `prod` uses interface VPC endpoints instead of a NAT gateway, trading a fixed cost per endpoint
+  for no NAT cost. `dev` has neither: workloads run in the public subnets with a public IP and
+  security groups that accept nothing from the internet, which removes the fixed cost.

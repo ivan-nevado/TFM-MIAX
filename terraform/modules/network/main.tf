@@ -1,5 +1,8 @@
-# VPC with public and private subnets in two availability zones, and VPC endpoints so the
-# training jobs and the API reach S3, ECR and CloudWatch Logs without leaving the AWS network.
+# VPC with public and private subnets in two availability zones and a gateway endpoint for S3.
+# Workloads reach the other AWS services in one of two ways:
+#   - private subnets and interface endpoints (interface_endpoints, a fixed hourly cost each), or
+#   - public subnets with a public IP and no interface endpoints (map_public_ip_on_launch); the
+#     security groups of the workloads then allow no inbound traffic from the internet.
 
 data "aws_availability_zones" "available" {
   state = "available"
@@ -28,7 +31,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.this.id
   availability_zone       = local.azs[count.index]
   cidr_block              = cidrsubnet(var.vpc_cidr, 4, count.index)
-  map_public_ip_on_launch = false
+  map_public_ip_on_launch = var.map_public_ip_on_launch
   tags                    = merge(var.tags, { Name = "${var.name}-public-${count.index}", Tier = "public" })
 }
 
@@ -100,6 +103,7 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_security_group" "endpoints" {
+  count       = length(var.interface_endpoints) > 0 ? 1 : 0
   name_prefix = "${var.name}-endpoints-"
   description = "HTTPS from inside the VPC to the interface endpoints"
   vpc_id      = aws_vpc.this.id
@@ -125,7 +129,7 @@ resource "aws_vpc_endpoint" "interface" {
   service_name        = "com.amazonaws.${data.aws_region.current.name}.${each.value}"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.endpoints.id]
+  security_group_ids  = [aws_security_group.endpoints[0].id]
   private_dns_enabled = true
   tags                = merge(var.tags, { Name = "${var.name}-${replace(each.value, ".", "-")}" })
 }

@@ -10,10 +10,10 @@ resource "aws_security_group" "batch" {
   vpc_id      = var.vpc_id
 
   egress {
-    description = "Outbound to AWS services through the VPC endpoints (or a NAT gateway)"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "HTTPS to AWS services and the public Ken French files"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

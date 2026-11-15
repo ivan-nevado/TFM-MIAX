@@ -23,9 +23,15 @@ variable "public_subnet_ids" {
   type        = list(string)
 }
 
-variable "private_subnet_ids" {
-  description = "Private subnets of the tasks."
+variable "task_subnet_ids" {
+  description = "Subnets of the tasks: private ones, or public ones together with assign_public_ip."
   type        = list(string)
+}
+
+variable "assign_public_ip" {
+  description = "Give the tasks a public IP. Needed in public subnets without interface endpoints; inbound stays limited to the load balancer."
+  type        = bool
+  default     = false
 }
 
 variable "image" {
