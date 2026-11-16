@@ -1,0 +1,16 @@
+# Build context is the repository root. Licensed data and outputs must never reach an image.
+data/
+DATA2/
+reports/
+.git/
+.venv/
+.claude/
+**/node_modules/
+frontend/dist/
+**/__pycache__/
+**/.terraform/
+**/*.tfvars
+**/*.tfstate*
+.env
+docs/paper/
+docs/replication/REPLICATION_REPORT.md

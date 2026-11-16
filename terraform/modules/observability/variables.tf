@@ -32,14 +32,20 @@ variable "monthly_budget_usd" {
   default     = 50
 }
 
+variable "enable_api_alarms" {
+  description = "Create the API 5xx and CPU alarms. A literal bool, so count is known at plan time."
+  type        = bool
+  default     = false
+}
+
 variable "alb_arn_suffix" {
-  description = "ARN suffix of the API load balancer. Null skips the 5xx alarm."
+  description = "ARN suffix of the API load balancer (required when enable_api_alarms is true)."
   type        = string
   default     = null
 }
 
 variable "ecs_cluster_name" {
-  description = "ECS cluster of the API. Null skips the CPU alarm."
+  description = "ECS cluster of the API (required when enable_api_alarms is true)."
   type        = string
   default     = null
 }

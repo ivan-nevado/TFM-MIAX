@@ -14,7 +14,7 @@ variable "vpc_id" {
 }
 
 variable "subnet_ids" {
-  description = "Private subnets of the compute environment."
+  description = "Subnets of the compute environment: private ones, or public ones that assign a public IP on launch."
   type        = list(string)
 }
 

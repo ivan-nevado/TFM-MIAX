@@ -14,6 +14,7 @@ dependencies = [
   "pydantic-settings>=2.2",
   "pandas>=2.1,<2.3",
   "pyarrow>=14",
+  "fsspec>=2024.2",  # imported by app.repositories.store for local and s3:// paths alike
 ]
 
 [project.optional-dependencies]

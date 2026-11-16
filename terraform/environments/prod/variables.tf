@@ -29,7 +29,19 @@ variable "vpc_cidr" {
 }
 
 variable "enable_nat_gateway" {
-  description = "Create a NAT gateway (not needed: the VPC endpoints cover the AWS calls)."
+  description = "Create a NAT gateway. Not needed with interface endpoints or with workloads in the public subnets."
+  type        = bool
+  default     = false
+}
+
+variable "interface_endpoints" {
+  description = "Interface VPC endpoints (billed per hour and availability zone). Empty needs workloads_in_public_subnets."
+  type        = list(string)
+  default     = ["ecr.api", "ecr.dkr", "logs", "ssm", "secretsmanager", "ecs", "ecs-agent", "ecs-telemetry"]
+}
+
+variable "workloads_in_public_subnets" {
+  description = "Run the API tasks and the training instances in the public subnets with a public IP. Their security groups accept no traffic from the internet."
   type        = bool
   default     = false
 }
@@ -62,6 +74,12 @@ variable "batch_max_vcpus" {
   description = "Upper bound of the Spot compute environment."
   type        = number
   default     = 128
+}
+
+variable "batch_instance_types" {
+  description = "Instance types or families of the Spot compute environment. One instance must hold a job (batch_job_vcpus, batch_job_memory_mib) and fit in the account's Spot vCPU quota."
+  type        = list(string)
+  default     = ["c6i", "c6a", "m6i"]
 }
 
 variable "batch_job_vcpus" {

@@ -2,8 +2,10 @@
 # in variables.tf defaults and terraform.tfvars (sizes, names, budget).
 
 locals {
-  name       = "${var.project}-${var.environment}"
-  ssm_prefix = "/${var.project}/${var.environment}"
+  name = "${var.project}-${var.environment}"
+  # Where the API tasks and the training instances run (see var.workloads_in_public_subnets).
+  workload_subnet_ids = var.workloads_in_public_subnets ? module.network.public_subnet_ids : module.network.private_subnet_ids
+  ssm_prefix          = "/${var.project}/${var.environment}"
   tags = merge(var.extra_tags, {
     Project     = var.project
     Environment = var.environment
@@ -12,11 +14,13 @@ locals {
 }
 
 module "network" {
-  source             = "../../modules/network"
-  name               = local.name
-  vpc_cidr           = var.vpc_cidr
-  enable_nat_gateway = var.enable_nat_gateway
-  tags               = local.tags
+  source                  = "../../modules/network"
+  name                    = local.name
+  vpc_cidr                = var.vpc_cidr
+  enable_nat_gateway      = var.enable_nat_gateway
+  interface_endpoints     = var.interface_endpoints
+  map_public_ip_on_launch = var.workloads_in_public_subnets
+  tags                    = local.tags
 }
 
 module "storage" {
@@ -58,6 +62,7 @@ module "observability" {
   log_retention_days = var.log_retention_days
   alarm_emails       = var.alarm_emails
   monthly_budget_usd = var.monthly_budget_usd
+  enable_api_alarms  = true
   alb_arn_suffix     = module.api_service.alb_arn_suffix
   ecs_cluster_name   = module.api_service.cluster_name
   ecs_service_name   = module.api_service.service_name
@@ -69,7 +74,7 @@ module "training_batch" {
   name                 = local.name
   region               = var.region
   vpc_id               = module.network.vpc_id
-  subnet_ids           = module.network.private_subnet_ids
+  subnet_ids           = local.workload_subnet_ids
   image                = "${module.ecr.repository_urls["training"]}:${var.training_image_tag}"
   job_role_arn         = module.iam.training_job_role_arn
   execution_role_arn   = module.iam.execution_role_arn
@@ -77,6 +82,7 @@ module "training_batch" {
   bucket_names         = module.storage.bucket_names
   log_group_name       = module.observability.log_group_names["training"]
   max_vcpus            = var.batch_max_vcpus
+  instance_types       = var.batch_instance_types
   job_vcpus            = var.batch_job_vcpus
   job_memory_mib       = var.batch_job_memory_mib
   tags                 = local.tags
@@ -89,7 +95,8 @@ module "api_service" {
   vpc_id             = module.network.vpc_id
   vpc_cidr           = module.network.vpc_cidr
   public_subnet_ids  = module.network.public_subnet_ids
-  private_subnet_ids = module.network.private_subnet_ids
+  task_subnet_ids    = local.workload_subnet_ids
+  assign_public_ip   = var.workloads_in_public_subnets
   image              = "${module.ecr.repository_urls["api"]}:${var.api_image_tag}"
   execution_role_arn = module.iam.execution_role_arn
   task_role_arn      = module.iam.api_task_role_arn

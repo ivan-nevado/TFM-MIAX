@@ -21,8 +21,14 @@ variable "enable_nat_gateway" {
   default     = false
 }
 
+variable "map_public_ip_on_launch" {
+  description = "Give instances launched in the public subnets a public IP (Batch instances when no interface endpoints exist)."
+  type        = bool
+  default     = false
+}
+
 variable "interface_endpoints" {
-  description = "Interface endpoint services (suffix after com.amazonaws.<region>.)."
+  description = "Interface endpoint services (suffix after com.amazonaws.<region>.). Empty creates none."
   type        = list(string)
   default     = ["ecr.api", "ecr.dkr", "logs", "ssm", "secretsmanager", "ecs", "ecs-agent", "ecs-telemetry"]
 }

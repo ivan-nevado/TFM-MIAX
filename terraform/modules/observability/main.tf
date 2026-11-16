@@ -20,9 +20,9 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint  = each.value
 }
 
-# ---- API alarms (created once the load balancer exists) ------------------------------------------
+# ---- API alarms (count uses a plan-time flag: ALB/ECS attributes are unknown until apply) ---------
 resource "aws_cloudwatch_metric_alarm" "api_5xx" {
-  count               = var.alb_arn_suffix == null ? 0 : 1
+  count               = var.enable_api_alarms ? 1 : 0
   alarm_name          = "${var.name}-api-5xx"
   alarm_description   = "The API returned server errors"
   namespace           = "AWS/ApplicationELB"
@@ -42,7 +42,7 @@ resource "aws_cloudwatch_metric_alarm" "api_5xx" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "api_cpu" {
-  count               = var.ecs_cluster_name == null ? 0 : 1
+  count               = var.enable_api_alarms ? 1 : 0
   alarm_name          = "${var.name}-api-cpu"
   alarm_description   = "API tasks are close to their CPU limit"
   namespace           = "AWS/ECS"
