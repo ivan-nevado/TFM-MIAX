@@ -19,5 +19,5 @@ api_desired_count = 0 # 0 = API stopped; set to 1 for a demo
 # github_repository        = "<owner>/<repository>"
 
 # Images are pushed with a dated tag: the repositories are immutable, so "latest" cannot be reused
-training_image_tag = "20261115"
+training_image_tag = "20261116"
 api_image_tag      = "20261115"

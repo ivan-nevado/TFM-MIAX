@@ -53,6 +53,8 @@ case "$STAGE" in
     relval report --config "$CONFIG"
     sync_up data/artifacts "s3://${RELVAL_ARTIFACTS_BUCKET}/artifacts"
     sync_up reports "s3://${RELVAL_ARTIFACTS_BUCKET}/reports"
+    # relval report writes the report next to the docs, outside reports/: upload it explicitly
+    aws s3 cp docs/replication/REPLICATION_REPORT.md "s3://${RELVAL_ARTIFACTS_BUCKET}/reports/REPLICATION_REPORT.md" --only-show-errors
     ;;
   *)
     echo "unknown stage: $STAGE" >&2
