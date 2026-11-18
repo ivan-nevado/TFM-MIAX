@@ -7,6 +7,7 @@ manifest (config, git commit, library versions, seeds, row counts, timings).
     relval train        models -> master predictions table (data/predictions)
     relval peers        peer weights for the configured months (data/artifacts)
     relval report       tables, figures and REPLICATION_REPORT.md
+    relval visual       visual report (EDA, convergence, XAI, hypothesis tests); trains nothing
     relval replicate    everything above, in order
 """
 
@@ -129,6 +130,14 @@ def stage_report(cfg, args=None) -> None:
     log(f"[done] report: {info['rows']}")
 
 
+def stage_visual(cfg, args=None) -> None:
+    """Visual report from the stored outputs (run `relval report` first)."""
+    from relval.reporting.visual.report import run
+
+    with manifest(cfg, "visual") as info:
+        info["rows"] = run(cfg, log)
+
+
 def stage_replicate(cfg, args=None) -> None:
     """Rebuild everything from data/raw: panel, every model, every table and figure."""
     t0 = time.time()
@@ -162,7 +171,8 @@ def stage_status(cfg, args=None) -> None:
 
 STAGES = {
     "external": stage_external, "ingest": stage_ingest, "panel": stage_panel, "train": stage_train,
-    "peers": stage_peers, "report": stage_report, "replicate": stage_replicate, "status": stage_status,
+    "peers": stage_peers, "report": stage_report, "visual": stage_visual, "replicate": stage_replicate,
+    "status": stage_status,
 }  # fmt: skip
 
 

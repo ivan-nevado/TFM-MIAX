@@ -67,7 +67,9 @@ not winsorise or drop rows to move the number. RRV keeps its known exploding pre
 
 ## Next
 
-1. Diagnose the BL extreme predictions (above).
+1. Diagnose the BL extreme predictions (above). `relval visual` (2026-11-18) traces the eight worst to
+   inputs thousands of times outside the month's range (`adj_sgr`, `pretret_noa_wr`, `lev`); proposal:
+   winsorise the BL inputs at p1-p99 of the fitting sample, cut chosen on validation.
 2. When the team wants to show results: apply the load balancer, API and frontend hosting.
 
 ## Running on AWS

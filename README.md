@@ -54,6 +54,7 @@ relval panel                # firm-month panel, 97 inputs, targets, Table 1 filt
 relval train --group base   # base GBMs; other groups: benchmarks, recon, robust, sensitivity
 relval peers                # peer weights and the validation of the decomposition
 relval report               # all tables (CSV + Markdown), figures (PNG), REPLICATION_REPORT.md
+relval visual               # visual report: EDA, convergence, XAI, hypothesis tests (trains nothing)
 ```
 
 `relval replicate --config smoke.yaml` runs every stage on six months in a few minutes. It checks
@@ -69,6 +70,9 @@ run as an AWS Batch array job, one child per year; see `terraform/modules/traini
 - `reports/replication/tables/`: every table as CSV and Markdown.
 - `reports/replication/figures/`: Figures 1–5 as PNG.
 - `data/predictions/replication/`: the master predictions table (one row per model, firm, month).
+- `reports/replication/visual/informe_visual.html`: visual report in Spanish (38 figures, hypothesis tests,
+  errors found and proposed improvements); PNG files in `figures/` for the thesis. Contains firm names: not
+  for publication.
 
 ## Backend and frontend
 
