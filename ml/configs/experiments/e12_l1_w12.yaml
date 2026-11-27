@@ -1,0 +1,16 @@
+# E1 + E2. L1 loss and the 12-month window together (run after reading E1 and E2 separately).
+extends: e2_w12.yaml
+run_name: experiments/e12_l1_w12
+
+experiment:
+  id: e12_l1_w12
+  family: E1+E2 combined
+  title: L1 loss with the 12-month window (test/validation firms excluded)
+  hypothesis: >
+    If L1 and the window help through different channels (robustness to outliers, more rows),
+    the gains should roughly add up; if both mainly help the thin early months, they overlap.
+
+gbm:
+  params:
+    objective: regression_l1
+    metric: l1

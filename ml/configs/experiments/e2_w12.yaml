@@ -1,0 +1,21 @@
+# E2a. Train the model of month t on months t-11..t, excluding the test and validation firms' past.
+extends: _common.yaml
+run_name: experiments/e2_w12
+
+experiment:
+  id: e2_w12
+  family: E2 training window
+  title: 12-month training window, test/validation firms excluded from the past months
+  hypothesis: >
+    Our models train on ~700 rows (paper 2,265) because of the survivor sample. Valuation structure
+    changes slowly, so adding the previous 11 months multiplies the training rows and should lower
+    med(|eps|), most in the 1990s where months are thinnest. Past rows of the firms being predicted
+    (and of the validation firms) are excluded, so the gain cannot come from recognising a firm.
+  baseline: replication
+  models: [ML_lnm2b, ML_lnv2a, ML_lnv2s]
+
+training_window:
+  months: 12
+  leakage_guard: exclude_test_firms   # blocks stay the paper's monthly split: paired with the baseline
+  lag_weight_decay: 1.0
+  align_history_level: false

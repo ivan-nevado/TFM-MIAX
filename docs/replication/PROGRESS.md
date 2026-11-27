@@ -65,6 +65,13 @@ extreme values there. The next step is to inspect those inputs (`adjopmad`, `adj
 not winsorise or drop rows to move the number. RRV keeps its known exploding predictions (see
 `DEVIATIONS.md`).
 
+## Extensions (2026-11-27)
+
+Code for E1 (robust loss: L1, Huber) and E2 (12-month training window with leakage guards) is in
+place and tested, with one config per experiment in `ml/configs/experiments/` and `relval
+compare` to set them against this replication. Not yet run on AWS. Everything about them —
+catalogue, reading rule, how to submit — is in `docs/experiments/README.md`.
+
 ## Next
 
 1. Diagnose the BL extreme predictions (above).

@@ -8,6 +8,11 @@ manifest (config, git commit, library versions, seeds, row counts, timings).
     relval peers        peer weights for the configured months (data/artifacts)
     relval report       tables, figures and REPLICATION_REPORT.md
     relval replicate    everything above, in order
+    relval compare      every experiment (ml/configs/experiments) against the replication
+    relval run-name     print the run name of --config (used by the AWS Batch entry point)
+
+Experiments: pass an experiment config, e.g. ``relval train --config experiments/e1_l1.yaml``.
+It trains only the models listed in its ``experiment.models`` and writes under its own run name.
 """
 
 from __future__ import annotations
@@ -21,6 +26,8 @@ import pandas as pd
 from relval.config import load_config
 from relval.data import french, schemas
 from relval.data.adapter import get_adapter
+from relval.experiments import registry
+from relval.experiments.registry import experiment_models, is_experiment
 from relval.features.industry import add_industries
 from relval.io import manifest, read_parquet, write_parquet
 from relval.models.specs import BASE_MODELS, SPECS, models_in_groups
@@ -94,6 +101,13 @@ def stage_train(cfg, args=None) -> None:
     groups = (getattr(args, "group", None) or "all").split(",")
     names = getattr(args, "models", None)
     models = names.split(",") if names else models_in_groups(GROUP_ORDER if "all" in groups else groups)
+    if is_experiment(cfg) and not names:
+        # an experiment never trains the whole registry by accident: --group only narrows its list
+        registry.validate(cfg)
+        allowed = experiment_models(cfg)
+        models = [m for m in allowed if m in models]
+        if not models:
+            raise SystemExit(f"--group {','.join(groups)} selects none of the experiment's models {allowed}")
     unknown = [m for m in models if m not in SPECS]
     if unknown:
         raise SystemExit(f"unknown models: {unknown}")
@@ -110,8 +124,15 @@ def stage_train(cfg, args=None) -> None:
 
 
 def stage_peers(cfg, args=None) -> None:
+    from relval.models import window
     from relval.pipelines import explain
 
+    # The peer-weight identity (paper, appendix A.3) holds for the L2 loss on one month's training
+    # firms. L1/Huber leaves are not residual means and a training window adds past rows: skip.
+    objective = str(cfg.get("gbm.params.objective", "regression"))
+    if objective not in ("regression", "regression_l2", "l2") or window.uses_window(cfg.data):
+        log(f"[skip] peers: not defined for objective={objective!r} or a training window")
+        return
     with manifest(cfg, "peers") as info:
         info["rows"] = explain.run(cfg, log)
 
@@ -141,10 +162,22 @@ def stage_replicate(cfg, args=None) -> None:
     log(f"[done] replicate in {(time.time() - t0) / 60:.1f} minutes")
 
 
+def stage_compare(cfg, args=None) -> None:
+    """Every experiment config against its baseline (reports/experiments)."""
+    from relval.experiments import compare
+
+    with manifest(cfg, "compare") as info:
+        info["rows"] = compare.run(log, root=cfg.root)
+
+
+def stage_run_name(cfg, args=None) -> None:
+    print(cfg.run_name)
+
+
 def stage_status(cfg, args=None) -> None:
     """Which (model, seed) runs are complete."""
     rows = []
-    for name in SPECS:
+    for name in experiment_models(cfg) if is_experiment(cfg) else SPECS:
         for seed in cfg.seeds if name in BASE_MODELS else [cfg.headline_seed]:
             d = cfg.predictions_dir(name, seed)
             done = len(list(d.glob("year=*.parquet"))) if d.exists() else 0
@@ -163,6 +196,7 @@ def stage_status(cfg, args=None) -> None:
 STAGES = {
     "external": stage_external, "ingest": stage_ingest, "panel": stage_panel, "train": stage_train,
     "peers": stage_peers, "report": stage_report, "replicate": stage_replicate, "status": stage_status,
+    "compare": stage_compare, "run-name": stage_run_name,
 }  # fmt: skip
 
 

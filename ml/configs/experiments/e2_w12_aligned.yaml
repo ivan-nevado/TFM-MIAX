@@ -1,0 +1,16 @@
+# E2b. As E2a, with each past month's targets shifted to month t's level.
+extends: e2_w12.yaml
+run_name: experiments/e2_w12_aligned
+
+experiment:
+  id: e2_w12_aligned
+  family: E2 training window
+  title: 12-month window, past months re-levelled to month t
+  hypothesis: >
+    Market-wide multiples move in crises (2000, 2008, 2020); a plain window then pulls predictions
+    towards the 12-month average level. Shifting each past month's ln(multiple) so its median equals
+    the median of month t's training rows keeps the cross-sectional information of the past months
+    without their level. Expected to help most in the months when the market level moved fast.
+
+training_window:
+  align_history_level: true

@@ -91,12 +91,14 @@ resource "aws_batch_job_definition" "pipeline" {
   platform_capabilities = ["EC2"]
   tags                  = var.tags
 
-  # Overridable at submission: stage, model group and the first year of the array.
+  # Overridable at submission: stage, model group, first year of the array and the config file
+  # (replication.yaml or an experiment, e.g. experiments/e1_l1.yaml).
   parameters = {
     stage      = "train"
     group      = "all"
     first_year = "1990"
     chunk      = "1"
+    config     = var.pipeline_config
   }
 
   retry_strategy {
@@ -119,7 +121,7 @@ resource "aws_batch_job_definition" "pipeline" {
 
   container_properties = jsonencode({
     image            = var.image
-    command          = ["batch_entrypoint.sh", "Ref::stage", "Ref::group", "Ref::first_year", "Ref::chunk"]
+    command          = ["batch_entrypoint.sh", "Ref::stage", "Ref::group", "Ref::first_year", "Ref::chunk", "Ref::config"]
     jobRoleArn       = var.job_role_arn
     executionRoleArn = var.execution_role_arn
     resourceRequirements = [

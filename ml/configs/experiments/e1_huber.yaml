@@ -1,0 +1,23 @@
+# E1b. Same GBM as the paper, Huber loss instead of L2.
+extends: _common.yaml
+run_name: experiments/e1_huber
+
+experiment:
+  id: e1_huber
+  family: E1 robust loss
+  title: GBM with Huber loss (delta 0.5)
+  hypothesis: >
+    Huber is quadratic for small residuals and linear beyond delta, so it keeps the efficiency of
+    L2 for typical firms and limits the pull of extreme multiples. Expected between the baseline
+    and L1 in med(|eps|), with a smaller loss than L1 in rmse_y.
+  baseline: replication
+  models: [ML_lnm2b, ML_lnv2a, ML_lnv2s]
+
+gbm:
+  params:
+    objective: huber
+    # delta of the Huber loss, in log points. Fixed a priori (not tuned on any test block): 0.5 is
+    # a ~65% gap between predicted and actual multiple; LightGBM's default 0.9 would leave almost
+    # every residual in the quadratic zone after the first trees.
+    alpha: 0.5
+    metric: huber

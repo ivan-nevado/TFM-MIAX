@@ -1,0 +1,15 @@
+# E2 DIAGNOSTIC. 12-month window with NO leakage guard. Not a result: never quote it as one.
+extends: e2_w12.yaml
+run_name: experiments/e2_w12_leaky
+
+experiment:
+  id: e2_w12_leaky
+  family: E2 training window (diagnostic)
+  title: "DIAGNOSTIC: 12-month window without leakage guard"
+  hypothesis: >
+    Measures the leak the guard prevents: the test firms' own past rows are in the training set.
+    The gap between this run and e2_w12 is the error reduction that would have been spurious.
+    Expected clearly below e2_w12; if not, the leak is small at this sample size.
+
+training_window:
+  leakage_guard: none
