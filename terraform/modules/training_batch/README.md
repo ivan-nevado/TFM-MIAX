@@ -16,4 +16,10 @@ aws batch submit-job --job-name replication-train \
 
 Then one job with `stage=report` builds the peer weights, tables, figures and the report.
 
+The `config` parameter (default `replication.yaml`) selects the run: an experiment such as
+`config=experiments/e1_l1.yaml` trains only its own models and writes under
+`predictions/experiments/<id>/`. `stage=compare` compares every experiment with the replication.
+`scripts/submit_experiments.ps1` submits train, report and compare with their dependencies; see
+`docs/experiments/README.md`.
+
 Outputs: `job_queue_arn`, `job_queue_name`, `job_definition_arn`, `job_definition_name`.

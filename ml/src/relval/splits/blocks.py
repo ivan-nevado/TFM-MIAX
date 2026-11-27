@@ -24,9 +24,32 @@ def assign_blocks(n: int, yyyymm: int, base_seed: int, n_blocks: int = 5) -> np.
     return blocks
 
 
-def add_blocks(month: pd.DataFrame, base_seed: int, n_blocks: int = 5) -> pd.DataFrame:
-    """Sort one month's sample by id and add the ``block`` column."""
+def firm_blocks(ids, base_seed: int, n_blocks: int = 5) -> pd.Series:
+    """Block of each firm, fixed for the whole period (extension E2, ``leakage_guard: firm_blocks``).
+
+    The unique ids, sorted, are dealt round-robin over a random permutation seeded by
+    ``base_seed`` alone, so a firm is in the same block in every month and its past months can
+    never train the model that predicts it. Monthly block sizes are only approximately equal.
+    """
+    uniq = np.sort(pd.unique(pd.Series(ids).astype(str)))
+    rng = np.random.default_rng(int(base_seed))
+    perm = rng.permutation(len(uniq))
+    blocks = np.empty(len(uniq), dtype=np.int8)
+    blocks[perm] = np.arange(len(uniq)) % n_blocks
+    return pd.Series(blocks, index=uniq, name="block")
+
+
+def add_blocks(
+    month: pd.DataFrame, base_seed: int, n_blocks: int = 5, by_firm: pd.Series | None = None
+) -> pd.DataFrame:
+    """Sort one month's sample by id and add the ``block`` column.
+
+    Default (paper): a fresh random split of the month. With ``by_firm`` (output of
+    :func:`firm_blocks`) the block of each firm is looked up instead."""
     month = month.sort_values("id", kind="stable").reset_index(drop=True)
+    if by_firm is not None:
+        month["block"] = month["id"].astype(str).map(by_firm).astype(np.int8).to_numpy()
+        return month
     date = month["date"].iloc[0]
     month["block"] = assign_blocks(len(month), date.year * 100 + date.month, base_seed, n_blocks)
     return month

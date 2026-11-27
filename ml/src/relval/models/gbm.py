@@ -56,15 +56,20 @@ def fit_gbm(
     seed: int,
     categorical: list[str] | None = None,
     fixed_rounds: int | None = None,
+    w_train: np.ndarray | None = None,
 ) -> GbmFit:
     """Train one model. With a validation set the number of trees is chosen by early stopping;
-    with ``fixed_rounds`` (80:20 split) exactly that many trees are built."""
+    with ``fixed_rounds`` (80:20 split) exactly that many trees are built.
+
+    The loss is ``gbm_cfg["params"]["objective"]`` (paper: ``regression``, i.e. L2). Extension E1
+    sets ``regression_l1`` or ``huber`` there; ``w_train`` (row weights) is used by extension E2
+    to down-weight past months of the training window. Both default to the paper."""
     params = lgb_params(gbm_cfg, seed)
     cat = [c for c in (categorical or []) if c in feature_names]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         dtrain = lgb.Dataset(
-            X_train, label=y_train, feature_name=list(feature_names),
+            X_train, label=y_train, weight=w_train, feature_name=list(feature_names),
             categorical_feature=cat or "auto", free_raw_data=False, params={"verbose": -1},
         )  # fmt: skip
         kwargs: dict = {}

@@ -1,0 +1,18 @@
+# E2 control. Firm-level blocks WITHOUT a window: isolates the effect of the split scheme alone.
+extends: _common.yaml
+run_name: experiments/e2_firmblocks_w1
+
+experiment:
+  id: e2_firmblocks_w1
+  family: E2 training window
+  title: "Control: blocks assigned per firm, one month (no window)"
+  hypothesis: >
+    Changing from a monthly random split to firm-level blocks should not change med(|eps|) beyond
+    seed noise. If it does, the difference between e2_w12_firmblocks and the baseline is not all
+    due to the window.
+  baseline: replication
+  models: [ML_lnm2b, ML_lnv2a, ML_lnv2s]
+
+training_window:
+  months: 1
+  leakage_guard: firm_blocks

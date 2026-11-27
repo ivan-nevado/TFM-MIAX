@@ -1,0 +1,20 @@
+# E1a. Same GBM as the paper, L1 loss instead of L2.
+extends: _common.yaml
+run_name: experiments/e1_l1
+
+experiment:
+  id: e1_l1
+  family: E1 robust loss
+  title: GBM with L1 loss (regression_l1)
+  hypothesis: >
+    We evaluate the median absolute error but the paper trains with L2, which chases the mean and
+    is pulled by extreme multiples; with ~700 training rows a few unusual firms move the fit. L1
+    fits the conditional median of ln(multiple), so med(|eps|) should fall, mostly for small firms
+    and in the 1990s, with med(eps) staying near zero.
+  baseline: replication
+  models: [ML_lnm2b, ML_lnv2a, ML_lnv2s]
+
+gbm:
+  params:
+    objective: regression_l1
+    metric: l1          # early stopping on the validation L1 (median-aligned)

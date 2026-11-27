@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import subprocess
 import time
@@ -58,6 +59,11 @@ def to_markdown(df: pd.DataFrame, floatfmt: str = ".3f") -> str:
 
 
 def git_commit(root: Path) -> str:
+    """Commit of the code: ``RELVAL_GIT_COMMIT`` (baked into the Docker image at build time, where
+    there is no ``.git``), else ``git rev-parse HEAD``."""
+    baked = os.environ.get("RELVAL_GIT_COMMIT", "").strip()
+    if baked:
+        return baked
     try:
         out = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, timeout=10, check=False
@@ -85,6 +91,8 @@ def manifest(cfg, stage: str, extra: dict[str, Any] | None = None):
         "run_name": cfg.run_name,
         "started_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": git_commit(cfg.root),
+        "image_tag": os.environ.get("RELVAL_IMAGE_TAG", "local"),
+        "batch_job_id": os.environ.get("AWS_BATCH_JOB_ID"),
         "versions": library_versions(),
         "config_file": str(cfg.source_file) if cfg.source_file else None,
         "config": cfg.data,

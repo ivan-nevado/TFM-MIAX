@@ -1,0 +1,13 @@
+# Settings shared by every experiment. Not an experiment itself (files starting with "_" are
+# skipped by `relval compare`). Each experiment file extends this one and changes ONE idea.
+extends: ../replication.yaml
+
+splits:
+  # Headline seed only: the comparison is paired with the replication's headline seed, firm-month by
+  # firm-month. The baseline's spread across its five seeds (<= 0.0005 in med|eps|) is the noise
+  # level a change must beat. Add seeds here to measure an experiment's own seed spread.
+  seeds: [20230301]
+
+gbm:
+  save_models: false   # model strings are only needed for peer weights (baseline only)
+  save_shap: true      # SHAP tells whether the experiment changed what the model relies on

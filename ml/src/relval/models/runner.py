@@ -18,6 +18,7 @@ from joblib import Parallel, delayed
 
 from relval.features.registry import FEATURES
 from relval.io import read_parquet, read_partitioned, write_parquet
+from relval.models import window
 from relval.models.benchmarks import bg, hp, rrv
 from relval.models.benchmarks.bl import BL_FEATURES, bl_features, ols_fit_predict
 from relval.models.benchmarks.ind import predict_ind
@@ -25,7 +26,7 @@ from relval.models.cart import fit_predict_cart
 from relval.models.gbm import fit_gbm
 from relval.models.lasso import design_matrix, fit_predict_lasso
 from relval.models.specs import BASE_MODELS, SPECS, ModelSpec
-from relval.splits.blocks import add_blocks, roles
+from relval.splits.blocks import add_blocks, firm_blocks, roles
 from relval.targets.multiples import target_values, to_equity_value, valuation_error
 
 PRED_COLUMNS = [
@@ -89,15 +90,51 @@ class GbmBlock:
     model: object  # relval.models.gbm.GbmFit
     X: np.ndarray
     columns: list[str]
-    train: np.ndarray  # rows the trees were built on
+    train: np.ndarray  # rows of month t the trees were built on
     test: np.ndarray
+    n_history: int = 0  # extra rows from past months (extension E2; 0 in the paper's set-up)
+
+
+def _history_training_rows(
+    spec: ModelSpec, df: pd.DataFrame, k: int, cfg: dict, ctx: dict, y_ref: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None] | None:
+    """Past-month training rows of one test block (extension E2), with the leakage guard applied.
+
+    Returns (X, y, weights or None), or None when the run has no window."""
+    hist = ctx.get("history")
+    if hist is None or len(hist) == 0:
+        return None
+    window.check_spec(spec)
+    wcfg = window.window_cfg(cfg)
+    n_blocks = int(cfg["splits"]["n_blocks"])
+    excluded = {k, (k + 1) % n_blocks}  # month t's test and validation blocks (see splits.roles)
+    h = hist[window.history_mask(hist, df, excluded, wcfg["leakage_guard"], ctx.get("firm_blocks"))]
+    if spec.sample == "listed":
+        h = h[h["origen"] == "final"]
+    yh = target_values(h, spec.target).to_numpy(dtype=float)
+    keep = ~np.isnan(yh) & sample_mask(spec, h, np.ones(len(h), bool), cfg)
+    h, yh = h[keep], yh[keep]
+    if len(h) == 0:
+        return None
+    Xh = gbm_inputs(spec, h, np.ones(len(h), bool), cfg)[0].to_numpy(dtype=float)
+    Xh[~np.isfinite(Xh)] = np.nan
+    date = df["date"].iloc[0]
+    if wcfg["align_history_level"] and len(y_ref):
+        yh = window.align_levels(yh, h["date"], float(np.median(y_ref)))
+    wh = None
+    if wcfg["lag_weight_decay"] < 1.0:
+        wh = window.lag_weights(h["date"], date, wcfg["lag_weight_decay"])
+    return Xh, yh, wh
 
 
 def fit_gbm_block(
     spec: ModelSpec, df: pd.DataFrame, y: pd.Series, k: int, cfg: dict, seed: int, ctx: dict
 ) -> GbmBlock | None:
-    """Fit the GBM of one test block. Deterministic given (spec, month sample, seed, k), so the
-    explainability stages can rebuild exactly the model behind the stored predictions."""
+    """Fit the GBM of one test block. Deterministic given (spec, month sample, seed, k, ctx), so
+    the explainability stages can rebuild exactly the model behind the stored predictions.
+
+    ``ctx["history"]`` (extension E2) adds past-month training rows; without it the model is
+    exactly the paper's."""
     n_blocks = int(cfg["splits"]["n_blocks"])
     train, val, test = roles(df["block"].to_numpy(), k, n_blocks)
     fit = ~test
@@ -115,11 +152,20 @@ def fit_gbm_block(
         if rounds is None or tr.sum() < min_train or te.sum() == 0:
             return None
         model = fit_gbm(X[tr], yv[tr], None, None, cols, cfg["gbm"], bseed, cat, fixed_rounds=int(rounds))
-    else:
-        if tr.sum() < min_train or va.sum() < 5 or te.sum() == 0:
-            return None
-        model = fit_gbm(X[tr], yv[tr], X[va], yv[va], cols, cfg["gbm"], bseed, cat)
-    return GbmBlock(model, X, cols, tr, te)
+        return GbmBlock(model, X, cols, tr, te)
+
+    X_fit, y_fit, w_fit, n_hist = X[tr], yv[tr], None, 0
+    extra = _history_training_rows(spec, df, k, cfg, ctx, yv[tr])
+    if extra is not None:
+        Xh, yh, wh = extra
+        n_hist = len(yh)
+        X_fit, y_fit = np.vstack([X_fit, Xh]), np.concatenate([y_fit, yh])
+        if wh is not None:
+            w_fit = np.concatenate([np.ones(int(tr.sum())), wh])
+    if len(y_fit) < min_train or va.sum() < 5 or te.sum() == 0:
+        return None
+    model = fit_gbm(X_fit, y_fit, X[va], yv[va], cols, cfg["gbm"], bseed, cat, w_train=w_fit)
+    return GbmBlock(model, X, cols, tr, te, n_hist)
 
 
 def _run_block(spec: ModelSpec, df: pd.DataFrame, y: pd.Series, k: int, cfg: dict, seed: int, ctx: dict):
@@ -138,10 +184,12 @@ def _run_block(spec: ModelSpec, df: pd.DataFrame, y: pd.Series, k: int, cfg: dic
         if blk is None:
             return None, None, None
         model, X, cols, tr, te = blk.model, blk.X, blk.columns, blk.train, blk.test
+        # n_train counts every training row (past months included); the R2oos reference mean stays
+        # the mean of month t's training rows, so R2oos is comparable with the paper's set-up.
         res = _frame(
             df.index[te],
             model.predict(X[te]),
-            int(tr.sum()),
+            int(tr.sum()) + blk.n_history,
             yv[tr].mean(),
             m[tr].mean(),
             model.best_iteration,
@@ -214,7 +262,8 @@ def run_month(
     """Train and predict one model on one monthly cross-section (all five test blocks)."""
     ctx = ctx or {}
     n_blocks = int(cfg["splits"]["n_blocks"])
-    df = add_blocks(month, seed, n_blocks)  # blocks come from the full monthly sample
+    # blocks come from the full monthly sample (per firm instead under E2's firm_blocks guard)
+    df = add_blocks(month, seed, n_blocks, by_firm=ctx.get("firm_blocks"))
     if spec.sample == "listed":
         df = df[df["origen"] == "final"].reset_index(drop=True)
     y = target_values(df, spec.target)
@@ -315,13 +364,25 @@ def train_models(cfg, models: list[str], seeds: list[int] | None = None, years: 
                 "want_shap": headline and bool(cfg["gbm"].get("save_shap", True)),
                 "want_models": headline and bool(cfg["gbm"].get("save_models", True)),
             }
+            # ---- extension E2: training window and firm-level blocks (no-ops for the paper) ----
+            wcfg = window.window_cfg(cfg.data)
+            if window.uses_firm_blocks(cfg.data):
+                base_ctx["firm_blocks"] = firm_blocks(sample["id"], seed, int(cfg["splits"]["n_blocks"]))
+            by_date: dict = {}
+            if wcfg["months"] > 1:
+                window.check_spec(spec)
+                hist_cols = window.history_columns(sample.columns)
+                by_date = {d: g[hist_cols] for d, g in sample.groupby("date", sort=True)}
             part = sample[sample["date"].dt.year.isin(pending)]
 
-            def tasks(part=part, ctx_all=ctx_all, base_ctx=base_ctx, spec=spec, seed=seed):
+            def tasks(part=part, ctx_all=ctx_all, base_ctx=base_ctx, spec=spec, seed=seed, by_date=by_date,
+                      n_months=wcfg["months"]):  # fmt: skip
                 for date, month in part.groupby("date", sort=True):
                     ctx = dict(base_ctx)
                     if "tnic" in ctx_all:
                         ctx["tnic_pairs"] = ctx_all["tnic"].get(date.year - 1)
+                    if by_date:
+                        ctx["history"] = window.history_for(by_date, date, n_months)
                     yield delayed(run_month)(spec, month, cfg.data, seed, ctx)
 
             results: list[MonthResult] = Parallel(n_jobs=cfg.n_jobs)(tasks())

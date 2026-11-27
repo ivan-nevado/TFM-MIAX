@@ -1,0 +1,16 @@
+# E2c. 12-month window with the other leakage guard: blocks assigned per firm for the whole period.
+extends: e2_w12.yaml
+run_name: experiments/e2_w12_firmblocks
+
+experiment:
+  id: e2_w12_firmblocks
+  family: E2 training window
+  title: 12-month window, blocks assigned per firm
+  hypothesis: >
+    Robustness of E2a to the leakage guard. A firm keeps its block in every month, so its past rows
+    are never in the model that predicts it. Compared with e2_firmblocks_w1 (same blocks, no
+    window), not with the replication, to isolate the effect of the window.
+  baseline: experiments/e2_firmblocks_w1
+
+training_window:
+  leakage_guard: firm_blocks
